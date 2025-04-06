@@ -1,7 +1,7 @@
-package main.java.com.picpaysimplificado.mapper;
+package main.java.com.picpaysimplificado.application.service;
 
+import com.picpaysimplificado.application.dto.UserDTO;
 import com.picpaysimplificado.domain.model.User;
-import com.picpaysimplificado.dto.UserDTO;
 import org.springframework.stereotype.Component;
 
 @Component

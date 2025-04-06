@@ -1,5 +1,8 @@
-package main.java.com.picpaysimplificado.dto;
+package main.java.com.picpaysimplificado.infrastructure.client;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -7,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class NotificationDTO {
+public class NotificationDto {
 
     @NotNull(message = "Email não pode ser nulo")
     @NotBlank(message = "Email é obrigatório")

@@ -4,6 +4,9 @@ import com.picpaysimplificado.domain.model.User;
 import com.picpaysimplificado.dto.UserDTO;
 import com.picpaysimplificado.exception.UserNotFoundException;
 import com.picpaysimplificado.repository.UserRepository;
+
+import main.java.com.picpaysimplificado.mapper.UserMapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,8 +16,13 @@ import java.util.List;
 @Service
 public class UserService {
     
-    @Autowired
-    private UserRepository repository;
+    private final UserRepository repository;
+    private final UserMapper mapper; 
+    
+    public UserService(UserRepository repository, UserMapper mapper) {
+        this.repository = repository;
+        this.mapper = mapper;
+    }
     
     public User findById(Long id) {
         return repository.findById(id)
@@ -22,15 +30,7 @@ public class UserService {
     }
     
     public User saveUser(UserDTO dto) {
-        User user = new User();
-        user.setFirstName(dto.getFirstName());
-        user.setLastName(dto.getLastName());
-        user.setDocument(dto.getDocument());
-        user.setEmail(dto.getEmail());
-        user.setPassword(dto.getPassword());
-        user.setBalance(dto.getBalance());
-        user.setUserType(dto.getUserType());
-        
+        User user = mapper.toEntity(dto);
         return repository.save(user);
     }
     

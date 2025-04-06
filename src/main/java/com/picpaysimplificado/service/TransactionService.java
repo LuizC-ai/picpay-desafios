@@ -4,51 +4,61 @@ import com.picpaysimplificado.domain.model.Transaction;
 import com.picpaysimplificado.domain.model.User;
 import com.picpaysimplificado.dto.TransactionDTO;
 import com.picpaysimplificado.repository.TransactionRepository;
+import com.picpaysimplificado.service.UserService;
 import com.picpaysimplificado.service.external.AuthorizationService;
 import com.picpaysimplificado.service.external.NotificationService;
+
+import main.java.com.picpaysimplificado.application.TransferServiceInterface;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Service
-public class TransactionService {
+public class TransactionService implements TransferServiceInterface {
     
-    @Autowired
-    private UserService userService;
+    private final UserService userService;
+    private final TransactionRepository repository;
+    private final AuthorizationService authorizationService;
+    private final NotificationService notificationService;
+
+    public TransactionService(
+            UserService userService, 
+            TransactionRepository repository,
+            AuthorizationService authorizationService,
+            NotificationService notificationService) {
+        this.userService = userService;
+        this.repository = repository;
+        this.authorizationService = authorizationService;
+        this.notificationService = notificationService;
+    }
     
-    @Autowired
-    private TransactionRepository repository;
-    
-    @Autowired
-    private AuthorizationService authorizationService;
-    
-    @Autowired
-    private NotificationService notificationService;
-    
+    @Override
     @Transactional
-    public Transaction createTransaction(TransactionDTO dto) {
-        User sender = userService.findById(dto.getSenderId());
-        User receiver = userService.findById(dto.getReceiverId());
+    public Transaction transfer(Long senderId, Long receiverId, BigDecimal amount) {
+        User sender = userService.findById(senderId);
+        User receiver = userService.findById(receiverId);
         
-        userService.validateTransaction(sender, dto.getValue());
+        userService.validateTransaction(sender, amount);
         
-        boolean isAuthorized = authorizationService.authorizeTransaction(sender, dto.getValue());
+        boolean isAuthorized = authorizationService.authorizeTransaction(sender, amount);
         
         if (!isAuthorized) {
             throw new IllegalStateException("Transação não autorizada pelo serviço externo");
         }
         
         Transaction transaction = new Transaction();
-        transaction.setAmount(dto.getValue());
+        transaction.setAmount(amount);
         transaction.setSender(sender);
         transaction.setReceiver(receiver);
         transaction.setTimestamp(LocalDateTime.now());
         
         // Atualiza os saldos
-        userService.updateBalance(sender, dto.getValue().negate());
-        userService.updateBalance(receiver, dto.getValue());
+        userService.updateBalance(sender, amount.negate());
+        userService.updateBalance(receiver, amount);
         
         // Salva a transação
         repository.save(transaction);
@@ -58,6 +68,11 @@ public class TransactionService {
         notificationService.sendNotification(receiver, "Você recebeu uma transferência");
         
         return transaction;
+    }
+    
+    @Transactional
+    public Transaction createTransaction(TransactionDTO dto) {
+        return transfer(dto.getSenderId(), dto.getReceiverId(), dto.getAmouunt());
     }
     
     public Transaction findById(Long id) {
